@@ -60,6 +60,7 @@ class Subscription implements SubscriptionInterface
      */
     public function deleteByEmail($email)
     {
+/*
         $websiteId = $this->storemanager->getStore()->getWebsiteId();
         $customerId = $this->customer->create()->setWebsiteId($websiteId)->loadByEmail($email)->getId();
 
@@ -68,7 +69,7 @@ class Subscription implements SubscriptionInterface
             $this->subscriberFactory->create()->unsubscribeCustomerById($customerId, true); // Disable email sending
             return; // Unsubscribed successfully
         }
-
+*/
         // Check if the email exists in the newsletter subscriber table
         $subscriber = $this->subscriberFactory->create()->loadByEmail($email);
         if ($subscriber->getId()) {
