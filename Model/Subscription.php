@@ -38,12 +38,19 @@ class Subscription implements SubscriptionInterface
 
     /**
      * @param string $email
-     * @return void
+     * @return string
      */
     public function isSubscribed($email)
     {
-        if (!$this->subscriberFactory->create()->loadByEmail($email)->isSubscribed()) {
-            throw new NoSuchEntityException(__('Email not subscribed'));
+        $subscriber = $this->subscriberFactory->create()->loadByEmail($email);
+        if ($subscriber->getId()) {
+            if ($subscriber->isSubscribed()) {
+                return "Email found. Subscription status: Subscribed";
+            } else {
+                return "Email found. Subscription status: Not Subscribed";
+            }
+        } else {
+            throw new NoSuchEntityException(__('Email not found'));
         }
     }
 
@@ -55,20 +62,25 @@ class Subscription implements SubscriptionInterface
     {
         $websiteId = $this->storemanager->getStore()->getWebsiteId();
         $customerId = $this->customer->create()->setWebsiteId($websiteId)->loadByEmail($email)->getId();
-        
+
         // Check if the email belongs to a customer
         if ($customerId) {
-            $this->subscriberFactory->create()->unsubscribeCustomerById($customerId);
+            $this->subscriberFactory->create()->unsubscribeCustomerById($customerId, true); // Disable email sending
             return; // Unsubscribed successfully
         }
-        
+
         // Check if the email exists in the newsletter subscriber table
         $subscriber = $this->subscriberFactory->create()->loadByEmail($email);
         if ($subscriber->getId()) {
-            $subscriber->unsubscribe();
-            return; // Unsubscribed successfully
+        // If the email exists in the newsletter subscriber table, unsubscribe the subscriber
+        // Disable email sending by setting the subscriber into "import mode"
+        $subscriber->setImportMode(true);
+        $subscriber->unsubscribe();
+        $subscriber->save();
+
+          return; // Unsubscribed successfully
         }
-        
+
         // If email is neither a customer nor a newsletter subscriber, do nothing
     }
 }
